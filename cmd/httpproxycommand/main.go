@@ -37,8 +37,6 @@ func main() {
 	log.Printf("Run command %q", strings.Join(command, " "))
 	err = httpproxycommand.ProxyCommand(context.Background(), proxy, command)
 	if err != nil {
-		log.Println(err)
-		fmt.Fprintf(os.Stderr, defaults)
-		flag.PrintDefaults()
+		log.Fatal(err)
 	}
 }

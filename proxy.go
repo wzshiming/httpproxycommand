@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
 
 	"github.com/wzshiming/commandproxy"
@@ -47,5 +48,15 @@ func ProxyCommand(ctx context.Context, proxy []string, command []string) error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+
+	sigs := make(chan os.Signal)
+	defer close(sigs)
+	signal.Notify(sigs)
+	defer signal.Stop(sigs)
+	go func() {
+		for sig := range sigs {
+			cmd.Process.Signal(sig)
+		}
+	}()
 	return cmd.Run()
 }
