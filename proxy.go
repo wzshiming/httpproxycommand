@@ -15,31 +15,14 @@ import (
 	"github.com/wzshiming/httpproxy"
 )
 
-type DialProxyCommand []string
-
-func (p *DialProxyCommand) DialContext(ctx context.Context, _ string, address string) (net.Conn, error) {
-	host, port, err := net.SplitHostPort(address)
-	if err != nil {
-		return nil, err
-	}
-	m := map[byte]string{
-		'h': host,
-		'p': port,
-	}
-	proxy := make([]string, len(*p))
-	copy(proxy, *p)
-	for i := range proxy {
-		proxy[i] = commandproxy.ReplaceEscape(proxy[i], m)
-	}
-	log.Printf("Connect to %s with %q", address, strings.Join(proxy, " "))
-	cp := commandproxy.ProxyCommand(ctx, proxy[0], proxy[1:]...)
-	return cp.Stdio()
-}
-
 func ProxyCommand(ctx context.Context, proxy []string, command []string) error {
-	dp := DialProxyCommand(proxy)
+	log.Printf("Run command %q", strings.Join(command, " "))
+	dp := commandproxy.DialProxyCommand(proxy)
 	s := httptest.NewServer(&httpproxy.ProxyHandler{
-		ProxyDial: dp.DialContext,
+		ProxyDial: func(ctx context.Context, network string, address string) (net.Conn, error) {
+			log.Printf("Connect to %s with %q", address, strings.Join(proxy, " "))
+			return dp.DialContext(ctx, network, address)
+		},
 	})
 	defer s.Close()
 	cmd := exec.CommandContext(ctx, command[0], command[1:]...)

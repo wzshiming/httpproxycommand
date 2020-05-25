@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/wzshiming/commandproxy"
 	"github.com/wzshiming/httpproxycommand"
@@ -34,7 +33,6 @@ func main() {
 		return
 	}
 
-	log.Printf("Run command %q", strings.Join(command, " "))
 	err = httpproxycommand.ProxyCommand(context.Background(), proxy, command)
 	if err != nil {
 		log.Fatal(err)
