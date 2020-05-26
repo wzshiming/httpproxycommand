@@ -1,4 +1,11 @@
 github.com/wzshiming/commandproxy v0.0.4 h1:uqjB7oz3jRQFhpx+AD1D8n5AavQHLy+uO1xF/pvAlWA=
 github.com/wzshiming/commandproxy v0.0.4/go.mod h1:wS6+aJ9KMHciqYX3xmDO0W+QVY0zvngeBvmoIFMfq8A=
-github.com/wzshiming/httpproxy v0.1.6 h1:4mOvQKp7ar7ZI9xUzfNFw/5EICNALSwBbPlKWZ7jfWE=
-github.com/wzshiming/httpproxy v0.1.6/go.mod h1:myauOlIvyxHEGg3v49vlDTNBdlYSi6zSGzZlE+YL4oQ=
+github.com/wzshiming/httpproxy v0.2.0 h1:RfYzbxWEbaYfRHrQc8DEC6+c120224Bpmlmd+oVBPww=
+github.com/wzshiming/httpproxy v0.2.0/go.mod h1:n2PT6sDB0Y+FLgcui0bNY3iNidAJ0pny9Uzh9FCcW8A=
+golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
+golang.org/x/net v0.0.0-20200520182314-0ba52f642ac2 h1:eDrdRpKgkcCqKZQwyZRyeFZgfqt37SL7Kv3tok06cKE=
+golang.org/x/net v0.0.0-20200520182314-0ba52f642ac2/go.mod h1:qpuaurCH72eLCgpAm/N6yyVIVM9cpaDIP3A8BGJEC5A=
+golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
+golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/text v0.3.0 h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=
+golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
