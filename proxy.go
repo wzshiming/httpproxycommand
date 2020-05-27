@@ -15,8 +15,7 @@ import (
 	"github.com/wzshiming/httpproxy"
 )
 
-func ProxyCommand(ctx context.Context, proxy []string, command []string) error {
-	log.Printf("Run command %q", strings.Join(command, " "))
+func ProxyServer(proxy []string) *httptest.Server {
 	dp := commandproxy.DialProxyCommand(proxy)
 	s := httptest.NewServer(&httpproxy.ProxyHandler{
 		ProxyDial: func(ctx context.Context, network string, address string) (net.Conn, error) {
@@ -24,7 +23,13 @@ func ProxyCommand(ctx context.Context, proxy []string, command []string) error {
 			return dp.DialContext(ctx, network, address)
 		},
 	})
+	return s
+}
+
+func ProxyCommand(ctx context.Context, proxy []string, command []string) error {
+	s := ProxyServer(proxy)
 	defer s.Close()
+	log.Printf("Run command %q", strings.Join(command, " "))
 	cmd := exec.CommandContext(ctx, command[0], command[1:]...)
 	env := append(os.Environ(), fmt.Sprintf("HTTP_PROXY=%s", s.URL), fmt.Sprintf("HTTPS_PROXY=%s", s.URL))
 	cmd.Env = env
