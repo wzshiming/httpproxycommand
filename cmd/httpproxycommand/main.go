@@ -22,11 +22,11 @@ const defaults = `httpproxycommand will start an http proxy and add HTTP_PROXY a
 Execute the following command. proxycommand is specified by the first parameter like ssh ProxyCommand.
 Usage: 
 	httpproxycommand 'proxycommand %h:%p' command ...
-	HTTP_PROXY=$(httpproxycommand 'proxycommand %h:%p') HTTPS_PROXY=$HTTP_PROXY command ...
+	HTTP_PROXY=$(httpproxycommand 'proxycommand %h:%p') HTTPS_PROXY=$(httpproxycommand 'proxycommand %h:%p') command ...
 
 Example:
 	httpproxycommand 'nc %h %p' curl http://example.org/
-	HTTP_PROXY=$(httpproxycommand 'nc %h %p') HTTPS_PROXY=$HTTP_PROXY curl http://example.org/
+	HTTP_PROXY=$(httpproxycommand 'nc %h %p') HTTPS_PROXY=$(httpproxycommand 'nc %h %p') curl http://example.org/
 `
 
 var (

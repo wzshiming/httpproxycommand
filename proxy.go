@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"os/exec"
@@ -22,6 +23,9 @@ func ProxyServer(proxy []string) *httptest.Server {
 			log.Printf("Connect to %s with %q", address, strings.Join(proxy, " "))
 			return dp.DialContext(ctx, network, address)
 		},
+		NotFound: http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			http.Error(rw, fmt.Sprintf("Proxy with %q", strings.Join(proxy, " ")), http.StatusNotFound)
+		}),
 	})
 	return s
 }
