@@ -43,9 +43,9 @@ func ProxyCommand(ctx context.Context, proxy []string, command []string) error {
 
 	sigs := make(chan os.Signal)
 	defer close(sigs)
-	signal.Notify(sigs)
-	defer signal.Stop(sigs)
 	go func() {
+		signal.Notify(sigs)
+		defer signal.Stop(sigs)
 		for sig := range sigs {
 			cmd.Process.Signal(sig)
 		}
