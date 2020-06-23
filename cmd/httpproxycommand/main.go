@@ -16,6 +16,7 @@ import (
 
 	"github.com/wzshiming/commandproxy"
 	"github.com/wzshiming/httpproxycommand"
+	"github.com/wzshiming/notify"
 )
 
 const defaults = `httpproxycommand will start an http proxy and add HTTP_PROXY and HTTPS_PROXY to environ. 
@@ -32,6 +33,7 @@ Example:
 var (
 	homeDir, _ = os.UserHomeDir()
 	prefix     = filepath.Join(homeDir, ".httpproxycommand")
+	ctx        = context.Background()
 )
 
 func main() {
@@ -85,7 +87,9 @@ func main() {
 		return
 	}
 
-	err = httpproxycommand.ProxyCommand(context.Background(), proxy, command)
+	ctx, cancel := context.WithCancel(ctx)
+	notify.Once(os.Interrupt, cancel)
+	err = httpproxycommand.ProxyCommand(ctx, proxy, command)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -129,11 +133,14 @@ func startServer(proxyname string, args []string, bg bool) (string, error) {
 	if bg {
 		return "", background()
 	}
-	svc := httpproxycommand.ProxyServer(args)
-	os.MkdirAll(filepath.Dir(proxyname), 0755)
-	err := ioutil.WriteFile(proxyname, []byte(svc.URL), 0755)
+	url, _, err := httpproxycommand.ProxyServer(args)
 	if err != nil {
 		return "", err
 	}
-	return svc.URL, nil
+	os.MkdirAll(filepath.Dir(proxyname), 0755)
+	err = ioutil.WriteFile(proxyname, []byte(url), 0755)
+	if err != nil {
+		return "", err
+	}
+	return url, nil
 }

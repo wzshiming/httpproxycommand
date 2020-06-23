@@ -6,49 +6,54 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"os/exec"
-	"os/signal"
 	"strings"
 
 	"github.com/wzshiming/commandproxy"
 	"github.com/wzshiming/httpproxy"
 )
 
-func ProxyServer(proxy []string) *httptest.Server {
+func ProxyServer(proxy []string) (string, *http.Server, error) {
 	dp := commandproxy.DialProxyCommand(proxy)
-	s := httptest.NewServer(&httpproxy.ProxyHandler{
-		ProxyDial: func(ctx context.Context, network string, address string) (net.Conn, error) {
-			log.Printf("Connect to %s with %q", address, strings.Join(proxy, " "))
-			return dp.DialContext(ctx, network, address)
+	listen, err := net.Listen("tcp", ":0")
+	if err != nil {
+		return "", nil, err
+	}
+	srv := &http.Server{
+		Handler: &httpproxy.ProxyHandler{
+			ProxyDial: func(ctx context.Context, network string, address string) (net.Conn, error) {
+				log.Printf("Connect to %s with %q", address, strings.Join(proxy, " "))
+				return dp.DialContext(ctx, network, address)
+			},
+			NotFound: http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+				http.Error(rw, fmt.Sprintf("Proxy with %q", strings.Join(proxy, " ")), http.StatusNotFound)
+			}),
 		},
-		NotFound: http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-			http.Error(rw, fmt.Sprintf("Proxy with %q", strings.Join(proxy, " ")), http.StatusNotFound)
-		}),
-	})
-	return s
+	}
+	go func() {
+		err = srv.Serve(listen)
+		if err != nil && err != http.ErrServerClosed {
+			log.Printf("Serve error %s", err)
+		}
+	}()
+
+	url := fmt.Sprintf("http://%s", listen.Addr())
+	return url, srv, nil
 }
 
 func ProxyCommand(ctx context.Context, proxy []string, command []string) error {
-	s := ProxyServer(proxy)
-	defer s.Close()
+	url, srv, err := ProxyServer(proxy)
+	if err != nil {
+		return err
+	}
+	defer srv.Close()
 	log.Printf("Run command %q", strings.Join(command, " "))
 	cmd := exec.CommandContext(ctx, command[0], command[1:]...)
-	env := append(os.Environ(), fmt.Sprintf("HTTP_PROXY=%s", s.URL), fmt.Sprintf("HTTPS_PROXY=%s", s.URL))
+	env := append(os.Environ(), fmt.Sprintf("HTTP_PROXY=%s", url), fmt.Sprintf("HTTPS_PROXY=%s", url))
 	cmd.Env = env
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
-	sigs := make(chan os.Signal)
-	defer close(sigs)
-	signal.Notify(sigs)
-	defer signal.Stop(sigs)
-	go func() {
-		for sig := range sigs {
-			cmd.Process.Signal(sig)
-		}
-	}()
 	return cmd.Run()
 }
