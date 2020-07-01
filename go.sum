@@ -1,5 +1,5 @@
-github.com/wzshiming/commandproxy v0.0.4 h1:uqjB7oz3jRQFhpx+AD1D8n5AavQHLy+uO1xF/pvAlWA=
-github.com/wzshiming/commandproxy v0.0.4/go.mod h1:wS6+aJ9KMHciqYX3xmDO0W+QVY0zvngeBvmoIFMfq8A=
+github.com/wzshiming/commandproxy v0.1.0 h1:GX2Jveq6ttd8xSBN4v4dBNgiqbRmaJaCdOJqIorNlLQ=
+github.com/wzshiming/commandproxy v0.1.0/go.mod h1:wS6+aJ9KMHciqYX3xmDO0W+QVY0zvngeBvmoIFMfq8A=
 github.com/wzshiming/httpproxy v0.2.0 h1:RfYzbxWEbaYfRHrQc8DEC6+c120224Bpmlmd+oVBPww=
 github.com/wzshiming/httpproxy v0.2.0/go.mod h1:n2PT6sDB0Y+FLgcui0bNY3iNidAJ0pny9Uzh9FCcW8A=
 github.com/wzshiming/notify v0.0.5 h1:c/S99kE2S1jNt74hg5bpmM0DFATEHNg5NDgl8sYKAfo=
