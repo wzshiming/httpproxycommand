@@ -1,6 +1,6 @@
 module github.com/wzshiming/httpproxycommand
 
-go 1.14
+go 1.15
 
 require (
 	github.com/wzshiming/commandproxy v0.1.0

@@ -44,8 +44,11 @@ func main() {
 		return
 	}
 
+	ctx, cancel := context.WithCancel(ctx)
+	notify.Once(os.Interrupt, cancel)
+
 	if len(args) < 3 {
-		proxuUrl, err := getProxyServer(prefix, args[1], true)
+		proxuUrl, err := getProxyServer(ctx, prefix, args[1], true)
 		if err != nil {
 			log.Println(err)
 			log.Println(defaults)
@@ -61,7 +64,7 @@ func main() {
 	}
 
 	if args[2] == "-" {
-		proxuUrl, err := getProxyServer(prefix, args[1], false)
+		proxuUrl, err := getProxyServer(ctx, prefix, args[1], false)
 		if err != nil {
 			log.Println(err)
 			log.Println(defaults)
@@ -73,7 +76,7 @@ func main() {
 			fmt.Println(proxuUrl)
 			os.Stdout.Close()
 		}
-		<-make(chan struct{})
+		<-ctx.Done()
 		return
 	}
 
@@ -87,16 +90,24 @@ func main() {
 		return
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
-	notify.Once(os.Interrupt, cancel)
-	err = httpproxycommand.ProxyCommand(ctx, proxy, command)
+	log.Printf("Run command %q", strings.Join(command, " "))
+	ignore := []string{
+		"HTTPS_PROXY", "https_proxy",
+		"HTTP_PROXY", "http_proxy",
+		"NO_PROXY", "no_proxy",
+	}
+	for _, i := range ignore {
+		os.Unsetenv(i)
+	}
+	envs := os.Environ()
+	err = httpproxycommand.ProxyCommand(ctx, envs, proxy, command)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func background() error {
-	cmd := exec.Command(os.Args[0], append(os.Args[1:], "-")...)
+func background(ctx context.Context) error {
+	cmd := exec.CommandContext(ctx, os.Args[0], append(os.Args[1:], "-")...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -104,7 +115,7 @@ func background() error {
 	return cmd.Start()
 }
 
-func getProxyServer(prefix, proxy string, bg bool) (string, error) {
+func getProxyServer(ctx context.Context, prefix, proxy string, bg bool) (string, error) {
 	args, err := commandproxy.SplitCommand(proxy)
 	if err != nil {
 		return "", err
@@ -116,24 +127,24 @@ func getProxyServer(prefix, proxy string, bg bool) (string, error) {
 	proxyname := filepath.Join(prefix, h)
 	file, err := ioutil.ReadFile(proxyname)
 	if err != nil {
-		return startServer(proxyname, args, bg)
+		return startServer(ctx, proxyname, args, bg)
 	}
 	proxyUrl := string(file)
 	resp, err := http.Head(proxyUrl)
 	if err != nil {
-		return startServer(proxyname, args, bg)
+		return startServer(ctx, proxyname, args, bg)
 	}
 	if resp.StatusCode != http.StatusNotFound {
-		return startServer(proxyname, args, bg)
+		return startServer(ctx, proxyname, args, bg)
 	}
 	return proxyUrl, nil
 }
 
-func startServer(proxyname string, args []string, bg bool) (string, error) {
+func startServer(ctx context.Context, proxyname string, args []string, bg bool) (string, error) {
 	if bg {
-		return "", background()
+		return "", background(ctx)
 	}
-	url, _, err := httpproxycommand.ProxyServer(args)
+	url, _, err := httpproxycommand.ProxyServer(ctx, args)
 	if err != nil {
 		return "", err
 	}

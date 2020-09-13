@@ -14,20 +14,27 @@ import (
 	"github.com/wzshiming/httpproxy"
 )
 
-func ProxyServer(proxy []string) (string, *http.Server, error) {
+func ProxyServer(ctx context.Context, proxy []string) (string, *http.Server, error) {
 	dp := commandproxy.DialProxyCommand(proxy)
-	listen, err := net.Listen("tcp", ":0")
+	listen, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		return "", nil, err
+		listen, err = net.Listen("tcp", "[::1]:0")
+		if err != nil {
+			return "", nil, err
+		}
 	}
+	cmd := strings.Join(proxy, " ")
 	srv := &http.Server{
+		BaseContext: func(listener net.Listener) context.Context {
+			return ctx
+		},
 		Handler: &httpproxy.ProxyHandler{
 			ProxyDial: func(ctx context.Context, network string, address string) (net.Conn, error) {
-				log.Printf("Connect to %s with %q", address, strings.Join(proxy, " "))
+				log.Printf("Connect to %s with %q", address, cmd)
 				return dp.DialContext(ctx, network, address)
 			},
 			NotFound: http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-				http.Error(rw, fmt.Sprintf("Proxy with %q", strings.Join(proxy, " ")), http.StatusNotFound)
+				http.Error(rw, fmt.Sprintf("Proxy with %q", cmd), http.StatusNotFound)
 			}),
 		},
 	}
@@ -42,16 +49,17 @@ func ProxyServer(proxy []string) (string, *http.Server, error) {
 	return url, srv, nil
 }
 
-func ProxyCommand(ctx context.Context, proxy []string, command []string) error {
-	url, srv, err := ProxyServer(proxy)
+func ProxyCommand(ctx context.Context, envs, proxy, command []string) error {
+	url, srv, err := ProxyServer(ctx, proxy)
 	if err != nil {
 		return err
 	}
 	defer srv.Close()
-	log.Printf("Run command %q", strings.Join(command, " "))
 	cmd := exec.CommandContext(ctx, command[0], command[1:]...)
-	env := append(os.Environ(), fmt.Sprintf("HTTP_PROXY=%s", url), fmt.Sprintf("HTTPS_PROXY=%s", url))
-	cmd.Env = env
+	cmd.Env = append(envs,
+		fmt.Sprintf("http_proxy=%s", url),
+		fmt.Sprintf("https_proxy=%s", url),
+	)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
